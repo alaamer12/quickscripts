@@ -1,0 +1,7 @@
+setup.py
+fastgit.egg-info/PKG-INFO
+fastgit.egg-info/SOURCES.txt
+fastgit.egg-info/dependency_links.txt
+fastgit.egg-info/entry_points.txt
+fastgit.egg-info/top_level.txt
+utils/__init__.py
