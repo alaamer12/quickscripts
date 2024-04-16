@@ -1,78 +1,149 @@
-import subprocess
 import os
-from fastgit.constants import GITIGNORE
-
-PATH = "F:\Projects\Python"
+import subprocess
 
 
-class UpdateNow:
+class GitHubRepoManager:
+    GITIGNORE = """
+    # Operating System Files
+    .DS_Store
+    Thumbs.db
+    desktop.ini
 
-    def __init__(self, path):
-        self.path = path
-        self.gitignore = GITIGNORE
+    # IDE/Editor Files
+    .idea/
+    .vscode/
+    *.suo
+    *.ntvs*
+    *.njsproj
+    *.sln
+    *.swp
+    *~
 
-    @staticmethod
-    def get_username():
-        _result = subprocess.run(["gh", "auth", "status"], check=True, capture_output=True,
+    # Build Output
+    node_modules/
+    dist/
+    build/
+    *.o
+    *.obj
+    *.class
+
+    # Dependency Directories
+    vendor/
+    jspm_packages/
+    typings/
+    *.jar
+    *.war
+
+    # Logs and Temporary Files
+    *.log
+    *.tmp
+    *.temp
+
+    # System Files
+    *.dll
+    *.exe
+    *.pdb
+    *.lib
+    *.so
+    *.dylib
+
+    # Configuration Files
+    .env
+    .DS_Store
+    .project
+    .classpath
+    .settings/
+
+    # IDE/Editor Specific
+    .idea/
+    .vscode/
+    *.sublime-project
+    *.sublime-workspace
+    *.idea/
+
+    # Miscellaneous
+    .dockerignore
+    .npmignore
+    .babelrc
+    .eslintrc
+    .gitattributes
+
+    # Custom Logs or Data Files
+    # Add any other file or directory specific to your project
+    """
+
+    def __init__(self):
+        self.current_directory = os.getcwd()
+        self.directory_name = os.path.basename(self.current_directory)
+        self.username = self.get_username()
+        self.repo_url = f"https://github.com/{self.username}/{self.verify_directory_name(self.directory_name)}.git"
+
+    def get_username(self):
+        _result = subprocess.run(["gh", "auth", "status"], check=True, cwd=self.current_directory, capture_output=True,
                                  text=True)
         first_index = _result.stdout.find("account") + len("account") + 1
         last_index = _result.stdout.find("(") - 1
         return _result.stdout[first_index:last_index]
 
-    def verify_directory_name(self):
-        valid_dirs = []
-        for _directory_name in os.listdir(self.path):
-            if " " in _directory_name:
-                print("Invalid directory name.")
-                print("Directory name should not contain any spaces.")
-                print("Trying to fix it...")
-                _directory_name = _directory_name.replace(" ", "_")
-                print(f"Directory name: {_directory_name}")
-                valid_dirs.append(_directory_name)
-            valid_dirs.append(_directory_name)
-        return valid_dirs
+    def verify_directory_name(self, directory_name):
+        if " " in directory_name:
+            print("Invalid directory name.")
+            print("Directory name should not contain any spaces.")
+            print("Trying to fix it...")
+            directory_name = directory_name.replace(" ", "-")
+            print(f"Directory name: {directory_name}")
+        return directory_name
 
-    # Get all subdirectories
-    def _get_paths(self):
-        return [os.path.join(self.path, path) for path in os.listdir(self.path) if
-                os.path.isdir(os.path.join(self.path, path))]
-
-    # Check if it has .git directory
-    def _check_git(self):
-        for path in self._get_paths():
-            if os.path.join(path, ".git"):
-                continue
-            else:
-                subprocess.run(["git", "init"], shell=True, cwd=os.path.join(path, ".git"))
-
-    # Check if it has .gitignore file
-    def _check_gitignore(self):
-        for path in self._get_paths():
-            if os.path.join(path, ".gitignore"):
-                continue
-            else:
-                with open(os.path.join(path, ".gitignore"), "w") as f:
-                    f.write(self.gitignore)
-
-
-    def _create_repo(self):
+    def check_logged_in(self):
         try:
+            _result = subprocess.run(["gh", "auth", "status"], check=True, cwd=self.current_directory,
+                                     capture_output=True, text=True)
+            if not _result.stdout.find("Logged in to github.com account"):
+                print("You are not logged in to GitHub.")
+                print("Please log in and try again.")
+                exit()
+        except subprocess.CalledProcessError:
             pass
-            # subprocess.run(["gh", "repo", "create", verify_directory_name(), "--public"], cwd=current_directory)
+
+    def init_git_repo(self):
+        if not os.path.exists(".git"):
+            subprocess.run(["git", "init"], cwd=self.current_directory)
+
+    def create_gitignore(self):
+        if not os.path.exists("../.gitignore"):
+            with open("../.gitignore", "w") as f:
+                f.write(self.GITIGNORE)
+
+    def create_github_repo(self):
+        try:
+            subprocess.run(["gh", "repo", "create", self.directory_name, "--public"], cwd=self.current_directory)
         except subprocess.CalledProcessError as e:
             print(f"Failed to create repo on GitHub: {e}")
             # pass
-    def update(self):
-        # First step check
-        self._check_git()
-        self._check_gitignore()
 
-        # Second step create Github repo
+    def commit_and_push(self, message):
+        try:
+            subprocess.run(["git", "add", "."], cwd=self.current_directory)
+            subprocess.run(["git", "commit", "-m", message], cwd=self.current_directory)
+            subprocess.run(["git", "branch", "-M", "main"], cwd=self.current_directory)
+            subprocess.run(["git", "remote", "add", "origin", self.repo_url], cwd=self.current_directory)
+            subprocess.run(["git", "push", "-u", "origin", "main"], cwd=self.current_directory)
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to commit and push: {e}")
 
-        for path in self._get_paths():
-            subprocess.run(["git", "add", "."], shell=True, cwd=path)
-            subprocess.run(["git", "commit", "-m", "update"], shell=True, cwd=path)
-            subprocess.run(["git", "push"], shell=True, cwd=path)
+    def main(self):
+        print("Committing and pushing...")
+        message = input("Enter commit message: {or go with the default message} :")
+        if message.strip() == "":
+            message = "Initial commit"
+        self.check_logged_in()
+        self.init_git_repo()
+        self.create_gitignore()
+        self.create_github_repo()
+        self.commit_and_push(message)
+        print("[OK]")
+        exit()
 
-    repo_url = (f"https://github.com/{get_username()}/"
-                f"{verify_directory_name()}.git")
+
+if __name__ == "__main__":
+    GitHubRepoManager().main()
