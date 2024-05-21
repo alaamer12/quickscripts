@@ -2,7 +2,7 @@ from moviepy.editor import VideoFileClip
 import os
 from pydub import AudioSegment
 
-PATH = r"F:\TOURS\others\ما بعد الأساسيات - Beyond the basics"
+PATH = r"E:\TOURS\others"
 
 
 def get_audios(path):
@@ -13,18 +13,17 @@ def get_audios(path):
             try:
                 video_path = os.path.join(path, vid_file)
                 if "-" in vid_file:
-                    new_name = vid_file.replace("-", "")
-                    os.rename(video_path, os.path.join(path, new_name))
-                    video_path = os.path.join(path, new_name)
+                    video_path = os.path.join(path, vid_file)
                 print(f"({i + 1}) {video_path}")
                 video = VideoFileClip(video_path)
                 videos.append(video)
             except:
                 continue
+            finally:
+                for video in videos:
+                    audio = video.audio
+                    audio.write_audiofile(f"{vid_file}.mp3")
 
-    for i, video in enumerate(videos):
-        audio = video.audio
-        audio.write_audiofile(f"{i + 1}.mp3")
         
 def cleanup():
     cwd = os.getcwd()

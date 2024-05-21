@@ -4,7 +4,7 @@ import subprocess
 from tqdm import tqdm
 import contextlib
 
-PATH = "F:\Projects\Python"
+PATH = r"E:\Projects\Python"
 COMMIT_MESSAGE = "update\n"
 
 
