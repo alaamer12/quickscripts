@@ -4,6 +4,7 @@ from tqdm import tqdm
 
 dir_path = r'D:\Documentations\Recap'
 
+
 def merge_docx(docx_files, output_file):
     merged_document = Document()
     try:
@@ -23,6 +24,7 @@ def merge_docx(docx_files, output_file):
         merged_document.save(output_file)
     except Exception as e:
         tqdm.write(f'Error while merging docx files: {e}')
+
 
 # Example usage
 docx_files = [file for file in os.listdir(dir_path) if file.endswith('.docx')]
