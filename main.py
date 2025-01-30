@@ -1,33 +1,28 @@
-from docx import Document
-import os
-from tqdm import tqdm
+from openpyxl import load_workbook
 
-dir_path = r'D:\Documentations\Recap'
+# Load the Excel file
+file_path = r"C:\Users\amrmu\Downloads\Backlog.xlsx"
+output_file_path = r"C:\Users\amrmu\Downloads\Backlog Sorted.xlsx"
+sheet_name = 'Sheet1'  # Replace with your actual sheet name if necessary
 
+# Load the workbook and the sheet
+workbook = load_workbook(filename=file_path)
+sheet = workbook[sheet_name]
 
-def merge_docx(docx_files, output_file):
-    merged_document = Document()
-    try:
-        for docx_file in tqdm(docx_files, desc='Merging files', unit='files'):
-            if not docx_file.endswith('.docx'):
-                continue
-            abs_docx_file = os.path.join(dir_path, docx_file)
-            if not os.path.exists(abs_docx_file):
-                continue
-            if os.path.isdir(abs_docx_file):
-                continue
-            # Add a new page with the file name as the title
-            doc: Document = Document(abs_docx_file)
-            for element in doc.element.body:
-                merged_document.element.body.append(element)
-            tqdm.write(f"Appended elements from {abs_docx_file} to {output_file}")
-        merged_document.save(output_file)
-    except Exception as e:
-        tqdm.write(f'Error while merging docx files: {e}')
+# Extract all rows of data, including the header
+data = []
+for row in sheet.iter_rows(values_only=True):
+    data.append(row)
 
+# Sort the data based on the values in the 5th column (index 4)
+header = data[0]  # Save the header row
+data = data[1:]   # Data without header
+sorted_data = sorted(data, key=lambda x: x[4] if x[4] is not None else '')
 
-# Example usage
-docx_files = [file for file in os.listdir(dir_path) if file.endswith('.docx')]
-docx_files.sort()
-output_file = 'merged_file.docx'
-merge_docx(docx_files, output_file)
+# Write the sorted data back into the sheet
+for i, row in enumerate([header] + sorted_data, start=1):
+    for j, value in enumerate(row, start=1):
+        sheet.cell(row=i, column=j, value=value)
+
+# Save the updated workbook
+workbook.save(filename=output_file_path)

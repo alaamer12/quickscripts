@@ -2,9 +2,9 @@ import shutil
 import os
 import colorama
 
+
 def compy_dir(src: str, des: str) -> None:
     shutil.copytree(src, des)
-
 
 
 if __name__ == "__main__":

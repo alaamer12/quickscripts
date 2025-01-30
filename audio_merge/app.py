@@ -2,7 +2,8 @@ from moviepy.editor import VideoFileClip
 import os
 from pydub import AudioSegment
 
-PATH = r"E:\TOURS\others"
+PATH = r"C:\Users\amrmu\Videos\VideoProc Converter AI\Startup School"
+FAILED = []
 
 
 def get_audios(path):
@@ -12,19 +13,18 @@ def get_audios(path):
         if vid_file.endswith(".webm") or vid_file.endswith(".mp4"):
             try:
                 video_path = os.path.join(path, vid_file)
-                if "-" in vid_file:
-                    video_path = os.path.join(path, vid_file)
                 print(f"({i + 1}) {video_path}")
                 video = VideoFileClip(video_path)
                 videos.append(video)
-            except:
+            except Exception as e:
+                print(f"Error processing {vid_file}: {e}")
                 continue
-            finally:
-                for video in videos:
-                    audio = video.audio
-                    audio.write_audiofile(f"{vid_file}.mp3")
 
-        
+    for video in videos:
+        audio = video.audio
+        audio.write_audiofile(f"{video.filename}.mp3")
+
+
 def cleanup():
     cwd = os.getcwd()
     for i, audio in enumerate(cwd):
@@ -47,5 +47,7 @@ def merge_audios():
 
 if __name__ == "__main__":
     audios = get_audios(PATH)
-    merge_audios()
-    cleanup()
+    # merge_audios()
+    # cleanup()
+    if FAILED:
+        print(FAILED)
